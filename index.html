@@ -338,17 +338,23 @@
     /* Products Grid */
     .grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(1, 1fr);
       gap: 16px;
     }
     
     @media (min-width: 600px) {
       .grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
       }
     }
     
     @media (min-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    @media (min-width: 1200px) {
       .grid {
         grid-template-columns: repeat(4, 1fr);
       }
@@ -1793,7 +1799,7 @@
         price: 229,
         oldPrice: 299,
         category: "ملابس",
-        img: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop",
+        img: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop",
         images: [
           "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop",
           "https://images.unsplash.com/photo-1551232864-3f0890e580d9?q=80&w=1200&auto=format&fit=crop",
@@ -1929,7 +1935,9 @@
         password: 'admin123'
       },
       // Login session
-      isLoggedIn: false
+      isLoggedIn: false,
+      // Broadcast channel for real-time updates
+      broadcastChannel: null
     };
     // ==== وظائف مساعدة ====
     const helpers = {
@@ -2260,6 +2268,27 @@
         const savedProducts = localStorage.getItem('halayasir-products');
         if (savedProducts) {
           products = JSON.parse(savedProducts);
+        }
+      },
+      // Save products to shared storage for cross-page communication
+      saveProductsToSharedStorage: (productsList) => {
+        localStorage.setItem('halayasir-shared-products', JSON.stringify(productsList));
+      },
+      // Load products from shared storage
+      loadProductsFromSharedStorage: () => {
+        const sharedProducts = JSON.parse(localStorage.getItem('halayasir-shared-products') || '[]');
+        if (sharedProducts.length > 0) {
+          // Merge with existing products, avoiding duplicates
+          const existingIds = products.map(p => p.id);
+          const newProducts = sharedProducts.filter(p => !existingIds.includes(p.id));
+          
+          if (newProducts.length > 0) {
+            products = [...newProducts, ...products];
+            helpers.showToast(`تمت إضافة ${newProducts.length} منتج جديد من لوحة التحكم`);
+          }
+          
+          // Clear shared storage after loading
+          localStorage.removeItem('halayasir-shared-products');
         }
       }
     };
@@ -2625,6 +2654,9 @@
         // Save to localStorage
         storage.saveProducts();
         
+        // Share products with main store page
+        admin.shareProductsWithMainStore();
+        
         // Update UI
         render.adminProducts();
         render.products();
@@ -2694,8 +2726,8 @@
         const url = DOM.adminImageUrl.value.trim();
         if (!url) {
           helpers.showToast('الرجاء إدخال رابط الصورة', 'error');
-          return
-                  }
+          return;
+        }
         
         if (!helpers.isValidUrl(url)) {
           helpers.showToast('الرابط غير صحيح', 'error');
@@ -2785,11 +2817,46 @@
         linkElement.click();
         
         helpers.showToast('تم إنشاء نسخة احتياطية بنجاح');
+      },
+      
+      // New function to share products with main store
+      shareProductsWithMainStore: () => {
+        // Save products to shared localStorage
+        storage.saveProductsToSharedStorage(products);
+        
+        // Send broadcast message if channel is available
+        if (state.broadcastChannel) {
+          state.broadcastChannel.postMessage({
+            type: 'productsUpdated',
+            count: products.length,
+            timestamp: Date.now()
+          });
+        }
+        
+        helpers.showToast('تم تحديث المنتجات في المتجر الرئيسي');
+      },
+      
+      // Initialize broadcast channel for real-time updates
+      initBroadcastChannel: () => {
+        if (window.BroadcastChannel) {
+          state.broadcastChannel = new BroadcastChannel('halayasir-store-channel');
+          
+          state.broadcastChannel.addEventListener('message', (event) => {
+            if (event.data.type === 'productsUpdated') {
+              helpers.showToast(`تم تحديث ${event.data.count} منتج من لوحة التحكم`);
+              storage.loadProductsFromSharedStorage();
+              render.products();
+            }
+          });
+        }
       }
     };
     // ==== إدارة الأحداث ====
     const events = {
       init: () => {
+        // Initialize broadcast channel for real-time updates
+        admin.initBroadcastChannel();
+        
         // Check if admin mode is requested
         if (helpers.checkAdminMode()) {
           // Show login modal if not logged in
@@ -2992,6 +3059,11 @@
         
         // Load products from localStorage
         storage.loadProducts();
+        
+        // Check for shared products from admin panel
+        if (!state.adminMode) {
+          storage.loadProductsFromSharedStorage();
+        }
         
         // Initial render
         if (!state.adminMode) {
