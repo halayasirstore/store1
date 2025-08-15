@@ -170,6 +170,16 @@
       justify-content: center;
     }
     
+    .btn.whatsapp {
+      background: #25d366;
+      color: white;
+      border-color: transparent;
+    }
+    
+    .btn.whatsapp:hover {
+      background: #128c7e;
+    }
+    
     /* Loading state */
     .btn.loading {
       position: relative;
@@ -1392,37 +1402,16 @@
               <label for="custCity">المدينة</label>
               <select id="custCity">
                 <option value="">إختر المدينة</option>
-             <option>الدار البيضاء</option>
-<option>الرباط</option>
-<option>طنجة</option>
-<option>مراكش</option>
-<option>فاس</option>
-<option>أكادير</option>
-<option>مكناس</option>
-<option>وجدة</option>
-<option>تطوان</option>
-<option>أسفي</option>
-<option>الناظور</option>
-<option>الخميسات</option>
-<option>القنيطرة</option>
-<option>بركان</option>
-<option>الجديدة</option>
-<option>خريبكة</option>
-<option>الحسيمة</option>
-<option>ورزازات</option>
-<option>تزنيت</option>
-<option>الصويرة</option>
-<option>العيون</option>
-<option>السمارة</option>
-<option>بني ملال</option>
-<option>تازة</option>
-<option>الراشيدية</option>
-<option>شفشاون</option>
-<option>كلميم</option>
-<option>زاكورة</option>
-<option>تاونات</option>
-<option>برشيد</option>
-<option>سيدي قاسم</option>
+                <option>الدار البيضاء</option>
+                <option>الرباط</option>
+                <option>طنجة</option>
+                <option>مراكش</option>
+                <option>فاس</option>
+                <option>أكادير</option>
+                <option>مكناس</option>
+                <option>وجدة</option>
+                <option>تطوان</option>
+                <option>أسفي</option>
               </select>
             </div>
             <div class="field">
@@ -1467,6 +1456,10 @@
                 <i class="fas fa-paper-plane"></i>
                 إرسال الطلب
               </button>
+              <button id="sendOrderWhatsAppBtn" class="btn whatsapp block">
+                <i class="fab fa-whatsapp"></i>
+                إرسال الطلب عبر واتساب
+              </button>
             </div>
           </div>
         </div>
@@ -1484,16 +1477,37 @@
           <label for="city">المدينة</label>
           <select id="city" required>
             <option value="">إختر المدينة</option>
-            <option>الدار البيضاء</option>
-            <option>الرباط</option>
-            <option>طنجة</option>
-            <option>مراكش</option>
-            <option>فاس</option>
-            <option>أكادير</option>
-            <option>مكناس</option>
-            <option>وجدة</option>
-            <option>تطوان</option>
-            <option>أسفي</option>
+          <option>الدار البيضاء</option>
+<option>الرباط</option>
+<option>طنجة</option>
+<option>مراكش</option>
+<option>فاس</option>
+<option>أكادير</option>
+<option>مكناس</option>
+<option>وجدة</option>
+<option>تطوان</option>
+<option>أسفي</option>
+<option>الناظور</option>
+<option>الخميسات</option>
+<option>القنيطرة</option>
+<option>بركان</option>
+<option>الجديدة</option>
+<option>خريبكة</option>
+<option>الحسيمة</option>
+<option>ورزازات</option>
+<option>تزنيت</option>
+<option>الصويرة</option>
+<option>العيون</option>
+<option>السمارة</option>
+<option>بني ملال</option>
+<option>تازة</option>
+<option>الراشيدية</option>
+<option>شفشاون</option>
+<option>كلميم</option>
+<option>زاكورة</option>
+<option>تاونات</option>
+<option>برشيد</option>
+<option>سيدي قاسم</option>
           </select>
         </div>
         <div class="field">
@@ -1822,7 +1836,7 @@
         category: "ملابس",
         img: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop",
         images: [
-          "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop",
           "https://images.unsplash.com/photo-1551232864-3f0890e580d9?q=80&w=1200&auto=format&fit=crop",
           "https://images.unsplash.com/photo-1551232864-3f0890e580d9?q=80&w=1200&auto=format&fit=crop"
         ],
@@ -1891,6 +1905,7 @@
       decreaseQty: document.getElementById('decreaseQty'),
       addToCartBtn: document.getElementById('addToCartBtn'),
       sendOrderBtn: document.getElementById('sendOrderBtn'),
+      sendOrderWhatsAppBtn: document.getElementById('sendOrderWhatsAppBtn'),
       cartBtn: document.getElementById('cartBtn'),
       heroCartBtn: document.getElementById('heroCartBtn'),
       mainLogo: document.getElementById('mainLogo'),
@@ -2428,6 +2443,66 @@
           DOM.sendOrderBtn.classList.remove('loading');
           DOM.sendOrderBtn.disabled = false;
         });
+      },
+      
+      sendOrderWhatsAppFromDetails: () => {
+        // Validate customer information
+        if (!DOM.custName.value.trim()) {
+          helpers.showToast('الرجاء إدخال الإسم الكامل', 'error');
+          return;
+        }
+        
+        if (!DOM.custPhone.value.trim()) {
+          helpers.showToast('الرجاء إدخال رقم الهاتف', 'error');
+          return;
+        }
+        
+        if (!helpers.validatePhone(DOM.custPhone.value.trim())) {
+          helpers.showToast('رقم الهاتف غير صحيح (مثال: 06xxxxxxxx)', 'error');
+          return;
+        }
+        
+        if (!DOM.custCity.value.trim()) {
+          helpers.showToast('الرجاء اختيار المدينة', 'error');
+          return;
+        }
+        
+        if (!DOM.custAddress.value.trim()) {
+          helpers.showToast('الرجاء إدخال العنوان', 'error');
+          return;
+        }
+        
+        // Get the product from cart
+        const productInCart = state.currentOrder.find(item => item.id === state.currentProduct.id);
+        if (!productInCart) {
+          helpers.showToast('المنتج غير موجود في السلة', 'error');
+          return;
+        }
+        
+        // Prepare the message text
+        const message = `طلب جديد من متجر هلا ياسر:\n\n` +
+          `المنتج: ${productInCart.name}\n` +
+          `الكمية: ${productInCart.qty}\n` +
+          `السعر: ${helpers.formatPrice(productInCart.price)}\n` +
+          `المجموع: ${helpers.formatPrice(productInCart.qty * productInCart.price)}\n\n` +
+          `بيانات العميل:\n` +
+          `الإسم: ${DOM.custName.value.trim()}\n` +
+          `الهاتف: ${DOM.custPhone.value.trim()}\n` +
+          `المدينة: ${DOM.custCity.value.trim()}\n` +
+          `العنوان: ${DOM.custAddress.value.trim()}\n` +
+          `ملاحظات: ${DOM.custNote.value.trim() || '-'}\n`;
+
+        // Encode the message for URL
+        const encodedMessage = encodeURIComponent(message);
+
+        // WhatsApp phone number (replace with the actual number)
+        const phoneNumber = '212600000000'; // Without '+' or '00'
+
+        // Create the WhatsApp URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+        // Open the WhatsApp URL in a new tab
+        window.open(whatsappUrl, '_blank');
       },
       
       validateForm: () => {
@@ -2976,6 +3051,9 @@
         
         DOM.sendOrderBtn.addEventListener('click', order.sendOrderFromDetails);
         
+        // WhatsApp order from details page
+        DOM.sendOrderWhatsAppBtn.addEventListener('click', order.sendOrderWhatsAppFromDetails);
+        
         // Search and filter
         DOM.filterPills.forEach(p => p.addEventListener('click', () => {
           DOM.filterPills.forEach(x => x.classList.remove('active'));
@@ -2998,7 +3076,7 @@
             return; 
           }
           
-          const phoneNumber = '212600000000'; // ضع رقم واتساب ديالك هنا بدون +
+          const phoneNumber = '212672612720'; // ضع رقم واتساب ديالك هنا بدون +
           const text = encodeURIComponent(order.getSummaryText());
           const url = `https://wa.me/${phoneNumber}?text=${text}`;
           window.open(url, '_blank');
@@ -3098,4 +3176,3 @@
   </script>
 </body>
 </html>
-
